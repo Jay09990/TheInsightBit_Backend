@@ -51,6 +51,7 @@ const registerUser = asyncHandler(async (req, res) => {
         email: email.toLowerCase(),
         password,
         address,
+        role:"user"
     });
 
     // Return created user without password/refreshTokens
@@ -66,18 +67,16 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
+    console.log("Login request body:", req.body);
+    console.log("Request headers:", req.headers);
 
-    console.log("Login request body:", req.body)
-    console.log("Request headers:", req.headers)
-
-    // Fix: Better validation for request body
     if (!req.body || Object.keys(req.body).length === 0) {
-        throw new ApiError(400, "Request body is missing or empty")
+        throw new ApiError(400, "Request body is missing or empty");
     }
 
-    const { email, userName, password } = req.body
+    const { email, userName, password } = req.body;
 
-    // Fix: Better validation
+    // Validate email/username + password
     if ((!email || email.trim() === "") && (!userName || userName.trim() === "")) {
         throw new ApiError(400, "Email or username is required for login.");
     }
@@ -86,48 +85,60 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Password is required for login.");
     }
 
-    // Fix: Convert to lowercase for consistent comparison
+    // Find user
     const user = await User.findOne({
         $or: [
             { userName: userName?.toLowerCase() },
             { email: email?.toLowerCase() }
         ]
-    })
+    });
 
     if (!user) {
         throw new ApiError(404, "User not found with the provided email or username.");
     }
 
-    const isPasswordValid = await user.isPasswordCorrect(password)
+    // Validate password
+    const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
-        throw new ApiError(401, "Password incorrect."); // Fix: Use 401 for auth errors
+        throw new ApiError(401, "Incorrect password.");
     }
 
+    // Generate tokens
     const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id);
 
-    const loggedInUser = await User.findById(user._id).select(
-        "-password -refreshTokens"
-    )
+    // Fetch clean user (without sensitive fields)
+    const loggedInUser = await User.findById(user._id).select("-password -refreshTokens");
 
     const options = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Fix: Only secure in production
-        sameSite: 'strict'
-    }
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict"
+    };
 
-    return res.status(200)
+    // ✅ Include role explicitly in response
+    return res
+        .status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
         .json(
             new ApiResponse(
-                200, {
-                user: loggedInUser,
-                accessToken,
-                refreshToken
-            }, "User logged in successfully"
+                200,
+                {
+                    user: {
+                        _id: loggedInUser._id,
+                        name: loggedInUser.name,
+                        email: loggedInUser.email,
+                        userName: loggedInUser.userName,
+                        role: loggedInUser.role || "user", // 👈 Make sure frontend gets it
+                    },
+                    accessToken,
+                    refreshToken
+                },
+                "User logged in successfully"
             )
-        )
-})
+        );
+});
+
 
 const logOutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(req.user._id,
