@@ -6,13 +6,25 @@ import Post from "../models/post.model.js";
 import fs from "fs";
 
 export const createPost = asyncHandler(async (req, res) => {
+    console.log("🟡 [createPost] Incoming request...");
+    console.log("Body:", req.body);
+    console.log("File:", req.file);
+    console.log("User:", req.user);
+
     const { headline, detail, tags } = req.body;
 
     if (!headline || !detail) {
+        console.log("❌ Missing headline or detail");
         throw new ApiError(400, "Headline and detail are required");
     }
 
+    if (!req.user) {
+        console.log("❌ req.user missing — check token middleware");
+        throw new ApiError(401, "Unauthorized: Missing user in request");
+    }
+
     if (req.user.role !== "admin") {
+        console.log("❌ User is not admin:", req.user.role);
         throw new ApiError(403, "Only admins can create posts");
     }
 
@@ -20,30 +32,61 @@ export const createPost = asyncHandler(async (req, res) => {
     let mediaType = null;
 
     if (req.file) {
-        const localFilePath = req.file.path;
-        const uploadedFile = await uploadToCloudinary(localFilePath);
+        try {
+            const localFilePath = req.file.path;
+            console.log("🟢 Uploading media:", localFilePath);
 
-        if (!uploadedFile) {
-            throw new ApiError(500, "Error uploading media to Cloudinary");
+            const uploadedFile = await uploadToCloudinary(localFilePath);
+
+            console.log("Cloudinary response:", uploadedFile);
+
+            if (!uploadedFile) {
+                throw new ApiError(500, "Error uploading media to Cloudinary");
+            }
+
+            mediaType = uploadedFile.resource_type === "video" ? "video" : "image";
+            mediaUrl = uploadedFile.secure_url;
+
+            // Clean up local file safely
+            try {
+                fs.unlinkSync(localFilePath);
+            } catch (unlinkErr) {
+                console.warn("⚠️ Could not delete temp file:", unlinkErr.message);
+            }
+        } catch (err) {
+            console.error("❌ Cloudinary upload failed:", err);
+            throw new ApiError(500, `Media upload failed: ${err.message}`);
         }
-
-        mediaType = uploadedFile.resource_type === "video" ? "video" : "image";
-        mediaUrl = uploadedFile.secure_url;
-
-        fs.unlinkSync(localFilePath); // cleanup
     }
 
-    const newPost = await Post.create({
-        headline,
-        detail,
-        tags: tags ? tags.split(",").map(t => t.trim()) : [],
-        mediaUrl,
-        mediaType,
-        author: req.user._id,
-    });
+    // Handle tags safely
+    let parsedTags = [];
+    if (tags) {
+        if (Array.isArray(tags)) parsedTags = tags.map(t => t.trim());
+        else if (typeof tags === "string") parsedTags = tags.split(",").map(t => t.trim());
+    }
 
-    return res.status(201).json(new ApiResponse(201, newPost, "Post created successfully"));
+    try {
+        const newPost = await Post.create({
+            headline,
+            detail,
+            tags: parsedTags,
+            mediaUrl,
+            mediaType,
+            author: req.user._id,
+        });
+
+        console.log("✅ Post created successfully:", newPost._id);
+
+        return res
+            .status(201)
+            .json(new ApiResponse(201, newPost, "Post created successfully"));
+    } catch (dbError) {
+        console.error("❌ Database error while creating post:", dbError);
+        throw new ApiError(500, "Database error: " + dbError.message);
+    }
 });
+
 
 // 🟡 FETCH ALL POSTS
 export const getAllPosts = asyncHandler(async (req, res) => {
@@ -96,7 +139,8 @@ export const getSliderPosts = async (req, res) => {
         const sliderPosts = await Post.find()
             .sort({ createdAt: -1 }) // recent first
             .limit(limit)
-            .select("headline detail mediaUrl tags createdAt"); // only required fields
+            .select("headline detail mediaUrl tags createdAt")
+            .populate("author", "userName fullName"); // only required fields
 
         res.status(200).json({
             success: true,
