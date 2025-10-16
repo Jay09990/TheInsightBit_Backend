@@ -31,6 +31,12 @@ const postSchema = new mongoose.Schema(
                 trim: true,
             },
         ],
+        categories: [
+            {
+                type: String,
+                trim: true,
+            },
+        ],
 
         author: {
             type: mongoose.Schema.Types.ObjectId,
