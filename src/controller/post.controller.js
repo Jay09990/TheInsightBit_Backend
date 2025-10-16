@@ -34,10 +34,10 @@ export const createPost = asyncHandler(async (req, res) => {
     // 🔹 Upload media to Cloudinary if provided
     if (req.file) {
         try {
-            const localFilePath = req.file.path;
-            console.log("🟢 Uploading media:", localFilePath);
+            console.log("🟢 Uploading media from buffer to Cloudinary...");
 
-            const uploadedFile = await uploadToCloudinary(localFilePath);
+            // Upload directly from buffer
+            const uploadedFile = await uploadToCloudinary(req.file.buffer);
 
             console.log("✅ Cloudinary response:", uploadedFile);
 
@@ -48,12 +48,6 @@ export const createPost = asyncHandler(async (req, res) => {
             mediaType = uploadedFile.resource_type === "video" ? "video" : "image";
             mediaUrl = uploadedFile.secure_url;
 
-            // Cleanup temp file
-            try {
-                fs.unlinkSync(localFilePath);
-            } catch (unlinkErr) {
-                console.warn("⚠️ Could not delete temp file:", unlinkErr.message);
-            }
         } catch (err) {
             console.error("❌ Cloudinary upload failed:", err);
             throw new ApiError(500, `Media upload failed: ${err.message}`);
@@ -68,10 +62,9 @@ export const createPost = asyncHandler(async (req, res) => {
             return value.split(",").map((v) => v.trim()).filter(Boolean);
         return [];
     };
-    // Support both `tags` and `tags[]`, `categories` and `categories[]`const tagsArray = normalizeToArray(req.body.tags || req.body['tags[]']);
+
     const categoriesArray = normalizeToArray(req.body.categories || req.body['categories[]']);
     const tagsArray = normalizeToArray(req.body.tags || req.body['tags[]']);
-
 
     console.log("🟣 Parsed tags:", tagsArray);
     console.log("🟢 Parsed categories:", categoriesArray);
@@ -97,6 +90,7 @@ export const createPost = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Database error: " + dbError.message);
     }
 });
+
 
 
 // 🟡 FETCH ALL POSTS

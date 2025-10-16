@@ -7,40 +7,52 @@ cloudinary.config({
     api_secret: process.env.CLAUDINARY_API_SECRET
 });
 
-const uploadToCloudinary = async (localFilePath) => {
-    let uploadResult;
+// const uploadToCloudinary = async (localFilePath) => {
+//     let uploadResult;
     
-    try {
-        uploadResult = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "auto"
-        });
+//     try {
+//         uploadResult = await cloudinary.uploader.upload(localFilePath, {
+//             resource_type: "auto"
+//         });
 
-        // console.log(uploadResult);
+//         // console.log(uploadResult);
 
-        // Optimize delivery by resizing and applying auto-format and auto-quality
-        const optimizeUrl = cloudinary.url(uploadResult.public_id, {
-            fetch_format: 'auto',
-            quality: 'auto'
-        });
+//         // Optimize delivery by resizing and applying auto-format and auto-quality
+//         const optimizeUrl = cloudinary.url(uploadResult.public_id, {
+//             fetch_format: 'auto',
+//             quality: 'auto'
+//         });
 
-        // console.log(optimizeUrl);
+//         // console.log(optimizeUrl);
 
-        // Transform the image: auto-crop to square aspect_ratio
-        const autoCropUrl = cloudinary.url(uploadResult.public_id, {
-            crop: 'auto',
-            gravity: 'auto',
-            width: 500,   // example value
-            height: 500   // example value
-        });
+//         // Transform the image: auto-crop to square aspect_ratio
+//         const autoCropUrl = cloudinary.url(uploadResult.public_id, {
+//             crop: 'auto',
+//             gravity: 'auto',
+//             width: 500,   // example value
+//             height: 500   // example value
+//         });
 
-        // console.log(autoCropUrl);
+//         // console.log(autoCropUrl);
 
-        return uploadResult;
-    } catch (error) {
-        fs.unlinkSync(localFilePath);
-        console.log(error);
-        return null;
-    }
-}
+//         return uploadResult;
+//     } catch (error) {
+//         fs.unlinkSync(localFilePath);
+//         console.log(error);
+//         return null;
+//     }
+// }
 
-export { uploadToCloudinary }
+export const uploadToCloudinary = async (fileBuffer) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: "the-insightbit", resource_type: "auto" },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result);
+            }
+        );
+
+        streamifier.createReadStream(fileBuffer).pipe(uploadStream);
+    });
+};
