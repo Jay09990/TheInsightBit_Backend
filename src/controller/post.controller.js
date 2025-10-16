@@ -88,26 +88,26 @@ export const deletePost = asyncHandler(async (req, res) => {
 });
 
 // Get limited slider posts
-// export const getSliderPosts = async (req, res) => {
-//     try {
-//         // Optional: use query param ?limit=5
-//         const limit = parseInt(req.query.limit) || 5;
+export const getSliderPosts = async (req, res) => {
+    try {
+        // Optional: use query param ?limit=5
+        const limit = parseInt(req.query.limit) || 5;
 
-//         const sliderPosts = await Post.find()
-//             .sort({ createdAt: -1 }) // recent first
-//             .limit(limit)
-//             .select("headline detail mediaUrl tags createdAt"); // only required fields
+        const sliderPosts = await Post.find()
+            .sort({ createdAt: -1 }) // recent first
+            .limit(limit)
+            .select("headline detail mediaUrl tags createdAt"); // only required fields
 
-//         res.status(200).json({
-//             success: true,
-//             count: sliderPosts.length,
-//             data: sliderPosts,
-//         });
-//     } catch (error) {
-//         console.error("Error fetching slider posts:", error);
-//         res.status(500).json({
-//             success: false,
-//             message: "Failed to fetch slider posts",
-//         });
-//     }
-// };
+        res.status(200).json({
+            success: true,
+            count: sliderPosts.length,
+            data: sliderPosts,
+        });
+    } catch (error) {
+        console.error("Error fetching slider posts:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch slider posts",
+        });
+    }
+};

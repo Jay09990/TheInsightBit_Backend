@@ -15,7 +15,7 @@ router.post("/create", verifyJWT, upload.single("media"), createPost);
 router.get("/all", getAllPosts);
 router.get("/headlines", getHeadlines);
 router.delete("/:postId", verifyJWT, deletePost);
-// router.get("/slider", getSliderPosts);
+router.get("/slider", getSliderPosts);
 
 
 export default router;
