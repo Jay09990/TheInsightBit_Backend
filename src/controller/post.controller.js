@@ -92,7 +92,7 @@ export const createPost = asyncHandler(async (req, res) => {
 export const getAllPosts = asyncHandler(async (req, res) => {
     const posts = await Post.find()
         .sort({ createdAt: -1 })
-        .populate("author", "username email");
+        .populate("author", "userName email");
 
     if (!posts || posts.length === 0) {
         throw new ApiError(404, "No posts found");
