@@ -7,6 +7,7 @@ const app = express()
 const allowedOrigins = [
   "http://localhost:5173",
   "https://the-insightbit.vercel.app/",
+  "*"
 ];
 
 app.use(cors({
