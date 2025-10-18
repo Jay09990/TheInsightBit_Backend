@@ -6,10 +6,6 @@ import Post from "../models/post.model.js";
 import fs from "fs";
 
 export const createPost = asyncHandler(async (req, res) => {
-    console.log("🟡 [createPost] Incoming request...");
-    console.log("Body:", req.body);
-    console.log("File:", req.file);
-    console.log("User:", req.user);
 
     const { headline, detail } = req.body;
 
@@ -90,8 +86,6 @@ export const createPost = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Database error: " + dbError.message);
     }
 });
-
-
 
 // 🟡 FETCH ALL POSTS
 export const getAllPosts = asyncHandler(async (req, res) => {
