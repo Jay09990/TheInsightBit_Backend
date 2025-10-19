@@ -87,6 +87,82 @@ export const createPost = asyncHandler(async (req, res) => {
     }
 });
 
+export const editPost = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    const { headline, detail } = req.body;
+
+    if (!headline || !detail) {
+        console.log("❌ Missing headline or detail");
+        throw new ApiError(400, "Headline and detail are required");
+    }
+
+    if (!req.user) {
+        console.log("❌ req.user missing — check token middleware");
+        throw new ApiError(401, "Unauthorized: Missing user in request");
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+        console.log("❌ Post not found with ID:", postId);
+        throw new ApiError(404, "Post not found");
+    }
+
+    if (req.user.role !== "admin" && post.author.toString() !== req.user._id.toString()) {
+        console.log("❌ User not authorized to edit this post");
+        throw new ApiError(403, "You are not authorized to edit this post");
+    }
+
+    post.headline = headline;
+    post.detail = detail;
+
+    const normalizeToArray = (value) => {
+        if (!value) return [];
+        if (Array.isArray(value)) return value.map((v) => v.trim()).filter(Boolean);
+        if (typeof value === "string")
+            return value.split(",").map((v) => v.trim()).filter(Boolean);
+        return [];
+    };
+
+    const categoriesArray = normalizeToArray(req.body.categories || req.body['categories[]']);
+    const tagsArray = normalizeToArray(req.body.tags || req.body['tags[]']);
+
+    console.log("🟣 Updated tags:", tagsArray);
+    console.log("🟢 Updated categories:", categoriesArray);
+
+    post.tags = tagsArray;
+    post.categories = categoriesArray;
+
+    if (req.file) {
+        try {
+            console.log("🟢 Uploading new media from buffer to Cloudinary...");
+            const uploadedFile = await uploadToCloudinary(req.file.buffer);
+            console.log("✅ Cloudinary response:", uploadedFile);
+
+            if (!uploadedFile) {
+                throw new ApiError(500, "Error uploading media to Cloudinary");
+            }
+
+            post.mediaType = uploadedFile.resource_type === "video" ? "video" : "image";
+            post.mediaUrl = uploadedFile.secure_url;
+            console.log("✅ Media updated successfully");
+
+        } catch (err) {
+            console.error("❌ Cloudinary upload failed:", err);
+            throw new ApiError(500, `Media upload failed: ${err.message}`);
+        }
+    }
+
+    await post.save();
+    await post.populate("author", "userName email");
+
+    console.log("✅ Post updated successfully:", post._id);
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, post, "Post updated successfully"));
+});
+
 // 🟡 FETCH ALL POSTS
 export const getAllPosts = asyncHandler(async (req, res) => {
     const posts = await Post.find()

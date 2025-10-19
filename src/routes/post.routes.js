@@ -7,8 +7,8 @@ import {
     getHeadlines,
     getSliderPosts,
     deletePost,
-    // getAllCategories ,
-    getPostById, // 👈 import this new controller
+    getPostById,
+    editPost,
 } from "../controller/post.controller.js";
 
 const router = express.Router();
@@ -18,8 +18,7 @@ router.get("/all", getAllPosts);
 router.get("/headlines", getHeadlines);
 router.get("/slider", getSliderPosts);
 router.get("/:id", getPostById); // 👈 NEW: fetch a single post by ID
+router.route("/:postId").patch(verifyJWT, upload.single("media"), editPost);
 router.delete("/:postId", verifyJWT, deletePost);
-// router.get("/all", getAllCategories);
-
 
 export default router;
