@@ -11,16 +11,15 @@ connectDB()
     .then(() => {
         try {
             app.listen(process.env.PORT || 8000, () => {
-                console.log(`Server is running at port ${process.env.PORT}`);
+                // console.log(`Server is running at port ${process.env.PORT}`);
             })
         } catch (error) {
             app.on("error", (error) => {
-                console.log("Error: ", error);
+                // console.log("Error: ", error);
                 throw error
             })
         }
     })
     .catch((err) => {
-        console.log("MONGO DB connection failed", err);
-
+        // console.log("MONGO DB connection failed", err);
     })

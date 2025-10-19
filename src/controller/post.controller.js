@@ -10,17 +10,17 @@ export const createPost = asyncHandler(async (req, res) => {
     const { headline, detail } = req.body;
 
     if (!headline || !detail) {
-        console.log("❌ Missing headline or detail");
+        // console.log("❌ Missing headline or detail");
         throw new ApiError(400, "Headline and detail are required");
     }
 
     if (!req.user) {
-        console.log("❌ req.user missing — check token middleware");
+        // console.log("❌ req.user missing — check token middleware");
         throw new ApiError(401, "Unauthorized: Missing user in request");
     }
 
     if (req.user.role !== "admin") {
-        console.log("❌ User is not admin:", req.user.role);
+        // console.log("❌ User is not admin:", req.user.role);
         throw new ApiError(403, "Only admins can create posts");
     }
 
@@ -30,12 +30,12 @@ export const createPost = asyncHandler(async (req, res) => {
     // 🔹 Upload media to Cloudinary if provided
     if (req.file) {
         try {
-            console.log("🟢 Uploading media from buffer to Cloudinary...");
+            // console.log("🟢 Uploading media from buffer to Cloudinary...");
 
             // Upload directly from buffer
             const uploadedFile = await uploadToCloudinary(req.file.buffer);
 
-            console.log("✅ Cloudinary response:", uploadedFile);
+            // console.log("✅ Cloudinary response:", uploadedFile);
 
             if (!uploadedFile) {
                 throw new ApiError(500, "Error uploading media to Cloudinary");
@@ -45,7 +45,7 @@ export const createPost = asyncHandler(async (req, res) => {
             mediaUrl = uploadedFile.secure_url;
 
         } catch (err) {
-            console.error("❌ Cloudinary upload failed:", err);
+            // console.error("❌ Cloudinary upload failed:", err);
             throw new ApiError(500, `Media upload failed: ${err.message}`);
         }
     }
@@ -62,8 +62,8 @@ export const createPost = asyncHandler(async (req, res) => {
     const categoriesArray = normalizeToArray(req.body.categories || req.body['categories[]']);
     const tagsArray = normalizeToArray(req.body.tags || req.body['tags[]']);
 
-    console.log("🟣 Parsed tags:", tagsArray);
-    console.log("🟢 Parsed categories:", categoriesArray);
+    // console.log("🟣 Parsed tags:", tagsArray);
+    // console.log("🟢 Parsed categories:", categoriesArray);
 
     try {
         const newPost = await Post.create({
@@ -76,13 +76,13 @@ export const createPost = asyncHandler(async (req, res) => {
             author: req.user._id,
         });
 
-        console.log("✅ Post created successfully:", newPost._id);
+        // console.log("✅ Post created successfully:", newPost._id);
 
         return res
             .status(201)
             .json(new ApiResponse(201, newPost, "Post created successfully"));
     } catch (dbError) {
-        console.error("❌ Database error while creating post:", dbError);
+        // console.error("❌ Database error while creating post:", dbError);
         throw new ApiError(500, "Database error: " + dbError.message);
     }
 });
@@ -92,24 +92,24 @@ export const editPost = asyncHandler(async (req, res) => {
     const { headline, detail } = req.body;
 
     if (!headline || !detail) {
-        console.log("❌ Missing headline or detail");
-        throw new ApiError(400, "Headline and detail are required");
+        // console.log("❌ Missing headline or detail");
+        // throw new ApiError(400, "Headline and detail are required");
     }
 
     if (!req.user) {
-        console.log("❌ req.user missing — check token middleware");
+        // console.log("❌ req.user missing — check token middleware");
         throw new ApiError(401, "Unauthorized: Missing user in request");
     }
 
     const post = await Post.findById(postId);
 
     if (!post) {
-        console.log("❌ Post not found with ID:", postId);
+        // console.log("❌ Post not found with ID:", postId);
         throw new ApiError(404, "Post not found");
     }
 
     if (req.user.role !== "admin" && post.author.toString() !== req.user._id.toString()) {
-        console.log("❌ User not authorized to edit this post");
+        // console.log("❌ User not authorized to edit this post");
         throw new ApiError(403, "You are not authorized to edit this post");
     }
 
@@ -127,17 +127,17 @@ export const editPost = asyncHandler(async (req, res) => {
     const categoriesArray = normalizeToArray(req.body.categories || req.body['categories[]']);
     const tagsArray = normalizeToArray(req.body.tags || req.body['tags[]']);
 
-    console.log("🟣 Updated tags:", tagsArray);
-    console.log("🟢 Updated categories:", categoriesArray);
+    // console.log("🟣 Updated tags:", tagsArray);
+    // console.log("🟢 Updated categories:", categoriesArray);
 
     post.tags = tagsArray;
     post.categories = categoriesArray;
 
     if (req.file) {
         try {
-            console.log("🟢 Uploading new media from buffer to Cloudinary...");
+            // console.log("🟢 Uploading new media from buffer to Cloudinary...");
             const uploadedFile = await uploadToCloudinary(req.file.buffer);
-            console.log("✅ Cloudinary response:", uploadedFile);
+            // console.log("✅ Cloudinary response:", uploadedFile);
 
             if (!uploadedFile) {
                 throw new ApiError(500, "Error uploading media to Cloudinary");
@@ -145,10 +145,10 @@ export const editPost = asyncHandler(async (req, res) => {
 
             post.mediaType = uploadedFile.resource_type === "video" ? "video" : "image";
             post.mediaUrl = uploadedFile.secure_url;
-            console.log("✅ Media updated successfully");
+            // console.log("✅ Media updated successfully");
 
         } catch (err) {
-            console.error("❌ Cloudinary upload failed:", err);
+            // console.error("❌ Cloudinary upload failed:", err);
             throw new ApiError(500, `Media upload failed: ${err.message}`);
         }
     }
@@ -156,7 +156,7 @@ export const editPost = asyncHandler(async (req, res) => {
     await post.save();
     await post.populate("author", "userName email");
 
-    console.log("✅ Post updated successfully:", post._id);
+    // console.log("✅ Post updated successfully:", post._id);
 
     return res
         .status(200)
@@ -207,7 +207,7 @@ export const getPostById = async (req, res) => {
             data: post,
         });
     } catch (error) {
-        console.error("Error fetching post:", error);
+        // console.error("Error fetching post:", error);
         res.status(500).json({
             success: false,
             message: "Failed to fetch post",
@@ -251,7 +251,7 @@ export const getSliderPosts = async (req, res) => {
             data: sliderPosts,
         });
     } catch (error) {
-        console.error("Error fetching slider posts:", error);
+        // console.error("Error fetching slider posts:", error);
         res.status(500).json({
             success: false,
             message: "Failed to fetch slider posts",

@@ -67,8 +67,8 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-    console.log("Login request body:", req.body);
-    console.log("Request headers:", req.headers);
+    // console.log("Login request body:", req.body);
+    // console.log("Request headers:", req.headers);
 
     if (!req.body || Object.keys(req.body).length === 0) {
         throw new ApiError(400, "Request body is missing or empty");
