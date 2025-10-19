@@ -1,70 +1,53 @@
-import express from "express"
-import cors from "cors"
-import cookieParser from "cookie-parser"
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
-const app = express()
+const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://the-insightbit.vercel.app/",
-  "*"
+  "https://the-insightbit.vercel.app"
 ];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (e.g. mobile apps or curl)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (like mobile apps or curl)
+      // allow requests with no origin (e.g. curl, mobile apps)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = `CORS policy does not allow access from origin ${origin}`;
-        return callback(new Error(msg), false);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.error(`❌ Blocked by CORS: ${origin}`);
+        return callback(new Error("Not allowed by CORS"));
       }
-      return callback(null, true);
     },
-    credentials: true, // allow cookies if needed
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-
-app.use(express.json({ limit: '50mb' }))
-app.use(express.urlencoded({ extended: true, limit: '50mb' }))
-app.use(cookieParser())
-app.use(express.static('public'))
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(cookieParser());
+app.use(express.static("public"));
 
 app.use((req, res, next) => {
-    console.log('Request URL:', req.url);
-    console.log('Request Method:', req.method);
-    console.log('Content-Type:', req.headers['content-type']);
-    console.log('Body:', req.body);
-    console.log('Files:', req.files);
-    next();
+  console.log("Request URL:", req.url);
+  console.log("Request Method:", req.method);
+  console.log("Content-Type:", req.headers["content-type"]);
+  console.log("Origin:", req.headers.origin);
+  next();
 });
 
 // importing routes
-
-import userRouter from "./routes/user.routes.js"
-import postRouter from "./routes/post.routes.js"
+import userRouter from "./routes/user.routes.js";
+import postRouter from "./routes/post.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 
-//routes declaration
-
-app.use("/api/v1/users", userRouter)
-app.use("/api/v1/post",postRouter)
+// route declarations
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/post", postRouter);
 app.use("/api/v1/comments", commentRoutes);
 
-export { app }
+export { app };
