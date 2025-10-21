@@ -3,46 +3,20 @@ import JWT from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
-    {
-        fullName: {
-            type: String,
-            required: true,
-            trim: true
-        },
-        userName: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-            index: true
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true
-        },
-        password: {
-            type: String,
-            required: true
-        },
-        address: {
-            type: String,
-            required: true
-        },
-        refreshTokens: {
-            type: String
-        },
-        role: {
-            type: String,
-            enum: ["user", "admin"],
-            default: "user"
-        }
-    },
-    { timestamps: true }
+  {
+    fullName: { type: String, trim: true },
+    userName: { type: String, unique: true, lowercase: true, trim: true, index: true },
+    email: { type: String, unique: true, lowercase: true, trim: true },
+    password: { type: String }, // no "required" here now
+    address: { type: String },
+    avatar: { type: String },
+    googleId: { type: String, unique: true, sparse: true },
+    refreshTokens: { type: String },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+  },
+  { timestamps: true }
 );
+
 
 // Hash password before saving
 userSchema.pre("save", async function (next) {

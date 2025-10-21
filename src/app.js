@@ -1,43 +1,26 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import passport from "passport";
+import "./config/passport.js";
+import authRouter from "./routes/auth.routes.js";
+import userRouter from "./routes/user.routes.js";
+import postRouter from "./routes/post.routes.js";
+import commentRoutes from "./routes/comment.routes.js";
 
 const app = express();
 
 // ✅ Read CORS_ORIGIN from environment variable
 const corsOrigin = process.env.CORS_ORIGIN || "*";
 
-// console.log("🌐 CORS_ORIGIN:", corsOrigin);
-
-// ✅ CORS configuration that respects environment variable
+// ✅ Configure CORS properly
 const corsOptions = {
   origin: function (origin, callback) {
-    // If CORS_ORIGIN is "*", allow all origins
-    if (corsOrigin === "*") {
-      // console.log("✅ CORS: Allowing all origins (wildcard)");
-      return callback(null, true);
-    }
-
-    // Parse allowed origins from comma-separated string
+    if (corsOrigin === "*") return callback(null, true);
     const allowedOrigins = corsOrigin.split(",").map(o => o.trim());
-    
-    // console.log("📋 Allowed origins:", allowedOrigins);
-    // console.log("📍 Request origin:", origin);
-
-    // Allow requests with no origin (mobile apps, curl, Postman)
-    if (!origin) {
-      // console.log("✅ CORS: Allowing request with no origin");
-      return callback(null, true);
-    }
-
-    // Check if origin is in allowed list
-    if (allowedOrigins.includes(origin)) {
-      // console.log("✅ CORS: Origin allowed:", origin);
-      return callback(null, true);
-    } else {
-      // console.error("❌ CORS: Blocked origin:", origin);
-      return callback(new Error(`Not allowed by CORS: ${origin}`));
-    }
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -45,34 +28,24 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(cookieParser());
 app.use(express.static("public"));
+app.use(passport.initialize());
 
-// ✅ Logging middleware (optional, but helpful for debugging)
-// app.use((req, res, next) => {
-//   // console.log(`${req.method} ${req.url} - Origin: ${req.headers.origin || 'No origin'}`);
-//   next();
-// });
-
-// importing routes
-import userRouter from "./routes/user.routes.js";
-import postRouter from "./routes/post.routes.js";
-import commentRoutes from "./routes/comment.routes.js";
-
-// route declarations
+// ✅ API Routes
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/post", postRouter);
 app.use("/api/v1/comments", commentRoutes);
+app.use("/api/v1/auth", authRouter);
 
-// ✅ Health check endpoint
+// ✅ Health Check
 app.get("/", (req, res) => {
-  res.json({ 
-    status: "ok", 
+  res.json({
+    status: "ok",
     message: "Server is running",
-    cors: corsOrigin 
+    cors: corsOrigin,
   });
 });
 
