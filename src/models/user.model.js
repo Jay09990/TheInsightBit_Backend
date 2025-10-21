@@ -7,16 +7,20 @@ const userSchema = new Schema(
     fullName: { type: String, trim: true },
     userName: { type: String, unique: true, lowercase: true, trim: true, index: true },
     email: { type: String, unique: true, lowercase: true, trim: true },
-    password: { type: String }, // no "required" here now
+    password: { type: String },
     address: { type: String },
     avatar: { type: String },
     googleId: { type: String, unique: true, sparse: true },
     refreshTokens: { type: String },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    
+    // ✅ Add these fields for email verification
+    isEmailVerified: { type: Boolean, default: false },
+    emailVerificationOTP: { type: String },
+    otpExpiry: { type: Date },
   },
   { timestamps: true }
 );
-
 
 // Hash password before saving
 userSchema.pre("save", async function (next) {

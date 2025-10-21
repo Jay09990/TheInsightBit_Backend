@@ -7,6 +7,8 @@ import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import postRouter from "./routes/post.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
+import verificationRoutes from "./routes/verification.routes.js";
+
 
 const app = express();
 
@@ -39,6 +41,7 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/post", postRouter);
 app.use("/api/v1/comments", commentRoutes);
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/verification", verificationRoutes);
 
 // ✅ Health Check
 app.get("/", (req, res) => {
