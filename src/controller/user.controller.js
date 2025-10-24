@@ -38,10 +38,13 @@ const registerUser = asyncHandler(async (req, res) => {
     });
 
     if (existingUser) {
-        throw new ApiError(
-            409,
-            `User already exists with ${existingUser.email === email.toLowerCase() ? "email" : "username"}`
-        );
+        // ✅ Check which field conflicts
+        if (existingUser.email === email.toLowerCase()) {
+            throw new ApiError(409, "Email already registered. Please login instead.");
+        }
+        if (existingUser.userName === userName.toLowerCase()) {
+            throw new ApiError(409, "Username already taken. Please choose another.");
+        }
     }
 
     // Create user
@@ -51,7 +54,7 @@ const registerUser = asyncHandler(async (req, res) => {
         email: email.toLowerCase(),
         password,
         address,
-        role:"user"
+        role: "user"
     });
 
     // Return created user without password/refreshTokens
@@ -67,9 +70,6 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-    // console.log("Login request body:", req.body);
-    // console.log("Request headers:", req.headers);
-
     if (!req.body || Object.keys(req.body).length === 0) {
         throw new ApiError(400, "Request body is missing or empty");
     }
@@ -97,6 +97,16 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found with the provided email or username.");
     }
 
+    // ✅ Check if email is verified (for manual registration users)
+    if (!user.googleId && !user.isEmailVerified) {
+        throw new ApiError(403, "Please verify your email before logging in.");
+    }
+
+    // ✅ Check if user has a password (not a Google-only user trying manual login)
+    if (!user.password) {
+        throw new ApiError(400, "This account uses Google Sign-In. Please login with Google.");
+    }
+
     // Validate password
     const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
@@ -115,7 +125,6 @@ const loginUser = asyncHandler(async (req, res) => {
         sameSite: "strict"
     };
 
-    // ✅ Include role explicitly in response
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -126,10 +135,11 @@ const loginUser = asyncHandler(async (req, res) => {
                 {
                     user: {
                         _id: loggedInUser._id,
-                        name: loggedInUser.name,
+                        fullName: loggedInUser.fullName,
                         email: loggedInUser.email,
                         userName: loggedInUser.userName,
-                        role: loggedInUser.role || "user", // 👈 Make sure frontend gets it
+                        role: loggedInUser.role || "user",
+                        avatar: loggedInUser.avatar,
                     },
                     accessToken,
                     refreshToken
@@ -138,7 +148,6 @@ const loginUser = asyncHandler(async (req, res) => {
             )
         );
 });
-
 
 const logOutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(req.user._id,

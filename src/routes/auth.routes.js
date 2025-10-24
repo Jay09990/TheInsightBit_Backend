@@ -15,7 +15,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "https://the-insightbit.vercel.app/login", // ⚠️ Update to your local frontend URL
+    failureRedirect: process.env.FRONTEND_URL,
     session: false,
   }),
   async (req, res) => {
@@ -31,14 +31,26 @@ router.get(
       user.refreshTokens = refreshToken;
       await user.save();
 
-      // ✅ Redirect user to frontend with tokens
-      const frontendURL = process.env.FRONTEND_URL || "https://the-insightbit.vercel.app/";
+      // ✅ Prepare user data to send to frontend (remove sensitive fields)
+      const userResponse = {
+        _id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        userName: user.userName,
+        avatar: user.avatar,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+        googleId: user.googleId
+      };
+
+      // ✅ Redirect user to frontend with tokens AND user data
+      const frontendURL = process.env.FRONTEND_URL;
       res.redirect(
-        `${frontendURL}/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`
+        `${frontendURL}/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userResponse))}`
       );
     } catch (error) {
       console.error("Google OAuth Error:", error);
-      const frontendURL = process.env.FRONTEND_URL || "https://the-insightbit.vercel.app/";
+      const frontendURL = process.env.FRONTEND_URL;
       res.redirect(`${frontendURL}/login?error=auth_failed`);
     }
   }

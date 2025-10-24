@@ -8,7 +8,7 @@ import userRouter from "./routes/user.routes.js";
 import postRouter from "./routes/post.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import verificationRoutes from "./routes/verification.routes.js";
-
+import { errorHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
 
@@ -51,5 +51,7 @@ app.get("/", (req, res) => {
     cors: corsOrigin,
   });
 });
+
+app.use(errorHandler);
 
 export { app };

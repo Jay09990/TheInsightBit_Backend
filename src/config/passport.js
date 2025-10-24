@@ -31,7 +31,15 @@ passport.use(
             userName: randomUsername,
             email: profile.emails[0].value,
             avatar: profile.photos?.[0]?.value,
+            role: "user", 
+            isEmailVerified: true,
           });
+        } else {
+          // 4️⃣ If user exists but doesn't have a role, set it
+          if (!user.role) {
+            user.role = "user";
+            await user.save();
+          }
         }
 
         console.log("Google OAuth user:", user);
