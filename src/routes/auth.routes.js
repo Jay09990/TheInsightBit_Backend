@@ -46,7 +46,7 @@ router.get(
       // ✅ Redirect user to frontend with tokens AND user data
       const frontendURL = process.env.FRONTEND_URL;
       res.redirect(
-        `${frontendURL}/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userResponse))}`
+        `https://the-insightbit.vercel.app/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userResponse))}`
       );
     } catch (error) {
       console.error("Google OAuth Error:", error);
