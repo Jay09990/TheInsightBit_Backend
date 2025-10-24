@@ -44,13 +44,13 @@ router.get(
       };
 
       // ✅ Redirect user to frontend with tokens AND user data
-      const frontendURL = process.env.FRONTEND_URL;
+      const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
       res.redirect(
-        `https://the-insightbit.vercel.app/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userResponse))}`
+        `${frontendURL}/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userResponse))}`
       );
     } catch (error) {
       console.error("Google OAuth Error:", error);
-      const frontendURL = process.env.FRONTEND_URL;
+      const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
       res.redirect(`${frontendURL}/login?error=auth_failed`);
     }
   }
