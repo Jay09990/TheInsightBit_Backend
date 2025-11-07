@@ -2,8 +2,54 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadToCloudinary } from "../utils/claudinary.js";
+import sanitizeHtml from "sanitize-html";
 import Post from "../models/post.model.js";
 import fs from "fs";
+
+const sanitizeDetailHtml = (html) => {
+    return sanitizeHtml(html || "", {
+        allowedTags: [
+            "p",
+            "br",
+            "strong",
+            "em",
+            "u",
+            "ul",
+            "ol",
+            "li",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "span",
+            "a",
+        ],
+        allowedAttributes: {
+            a: ["href", "name", "target", "rel"],
+            span: ["style"],
+            p: ["style"],
+            li: ["style"],
+            h1: ["style"],
+            h2: ["style"],
+            h3: ["style"],
+            h4: ["style"],
+            h5: ["style"],
+            h6: ["style"],
+        },
+        allowedSchemes: ["http", "https", "mailto", "tel"],
+        allowProtocolRelative: true,
+        allowedStyles: {
+            '*': {
+                'font-family': [/^[^;]{0,100}$/],
+                // allow px, pt, em, rem (TinyMCE often uses pt)
+                'font-size': [/^[0-9.]{1,4}(px|pt|em|rem)$/],
+                'text-align': [/^(left|right|center|justify)$/],
+            },
+        },
+    });
+};
 
 export const createPost = asyncHandler(async (req, res) => {
 
@@ -66,9 +112,10 @@ export const createPost = asyncHandler(async (req, res) => {
     // console.log("🟢 Parsed categories:", categoriesArray);
 
     try {
+        const safeDetail = sanitizeDetailHtml(detail);
         const newPost = await Post.create({
             headline,
-            detail,
+            detail: safeDetail,
             tags: tagsArray,
             categories: categoriesArray,
             mediaUrl,
@@ -114,7 +161,7 @@ export const editPost = asyncHandler(async (req, res) => {
     }
 
     post.headline = headline;
-    post.detail = detail;
+    post.detail = sanitizeDetailHtml(detail);
 
     const normalizeToArray = (value) => {
         if (!value) return [];
