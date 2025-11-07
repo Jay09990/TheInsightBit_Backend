@@ -44,16 +44,17 @@ router.get(
       };
 
       // ✅ Redirect user to frontend with tokens AND user data
-      const frontendURL = process.env.FRONTEND_URL || "https://www.theinsightbit.com";
+      const frontendURL = process.env.FRONTEND_URL || "https://theinsightbit.com";
       res.redirect(
         `${frontendURL}/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userResponse))}`
       );
     } catch (error) {
       console.error("Google OAuth Error:", error);
-      const frontendURL = process.env.FRONTEND_URL || "https://www.theinsightbit.com";
+      const frontendURL = process.env.FRONTEND_URL || "https://theinsightbit.com";
       res.redirect(`${frontendURL}/login?error=auth_failed`);
     }
   }
 );
+
 
 export default router;
