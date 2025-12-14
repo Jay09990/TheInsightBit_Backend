@@ -28,8 +28,15 @@ const sanitizeDetailHtml = (html) => {
         ],
         // allow style attribute on all tags so inline font-size/underline from editor survive
         allowedAttributes: {
-            '*': ['style'],
             a: ["href", "name", "target", "rel"],
+            p: ['style'],
+            span: ['style'],
+            h1: ['style'],
+            h2: ['style'],
+            h3: ['style'],
+            h4: ['style'],
+            h5: ['style'],
+            h6: ['style'],
         },
         allowedSchemes: ["http", "https", "mailto", "tel"],
         allowProtocolRelative: true,
