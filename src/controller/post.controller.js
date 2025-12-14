@@ -26,26 +26,24 @@ const sanitizeDetailHtml = (html) => {
             "span",
             "a",
         ],
+        // allow style attribute on all tags so inline font-size/underline from editor survive
         allowedAttributes: {
+            '*': ['style'],
             a: ["href", "name", "target", "rel"],
-            span: ["style"],
-            p: ["style"],
-            li: ["style"],
-            h1: ["style"],
-            h2: ["style"],
-            h3: ["style"],
-            h4: ["style"],
-            h5: ["style"],
-            h6: ["style"],
         },
         allowedSchemes: ["http", "https", "mailto", "tel"],
         allowProtocolRelative: true,
         allowedStyles: {
             '*': {
                 'font-family': [/^[^;]{0,100}$/],
-                // allow px, pt, em, rem (TinyMCE often uses pt)
-                'font-size': [/^[0-9.]{1,4}(px|pt|em|rem)$/],
+                // allow px, pt, em, rem, % (TinyMCE often uses pt)
+                'font-size': [/^[0-9.]+(px|pt|em|rem|%)$/],
                 'text-align': [/^(left|right|center|justify)$/],
+                // allow basic text-decoration properties so underlines and similar styles survive
+                'text-decoration': [/^(underline|line-through|none)(\s.*)?$/],
+                'text-decoration-line': [/^(underline|line-through|none)$/],
+                'text-decoration-color': [/^[#\w\(\)\s,.%-]{1,50}$/],
+                'text-decoration-thickness': [/^[0-9.]+(px|pt|em|rem|%)$/],
             },
         },
     });
