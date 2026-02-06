@@ -12,6 +12,8 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         // 1️⃣ Check if user exists by Google ID
+
+        // console.log("Verifying user...", profile.id);
         let user = await User.findOne({ googleId: profile.id });
 
         // 2️⃣ If not, check if same email already exists (manual sign up)
@@ -31,7 +33,7 @@ passport.use(
             userName: randomUsername,
             email: profile.emails[0].value,
             avatar: profile.photos?.[0]?.value,
-            role: "user", 
+            role: "user",
             isEmailVerified: true,
           });
         } else {
